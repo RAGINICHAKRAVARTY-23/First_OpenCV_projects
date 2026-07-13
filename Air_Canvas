@@ -1,0 +1,154 @@
+import numpy as np
+import cv2
+import mediapipe as mp
+
+cap = cv2.VideoCapture(0)
+
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(
+    static_image_mode=False,
+    max_num_hands=1,
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.7
+)
+
+mp_draw = mp.solutions.drawing_utils
+
+prev_x = 0
+prev_y = 0
+draw_color = (255, 0, 255)
+brush_size = 5
+canvas = np.zeros((480, 640, 3), dtype=np.uint8)
+
+red_icon = cv2.imread("red.png")
+red_icon = cv2.resize(red_icon, (40, 40))
+
+pink_icon = cv2.imread("pink.png")
+pink_icon = cv2.resize(pink_icon, (40, 40))
+
+blue_icon = cv2.imread("blue.png")
+blue_icon = cv2.resize(blue_icon, (40, 40))
+
+green_icon = cv2.imread("green.png")
+green_icon = cv2.resize(green_icon, (40, 40))
+
+eraser_icon = cv2.imread("eraser.png")
+eraser_icon = cv2.resize(eraser_icon, (40, 40))
+
+dustbin_icon = cv2.imread("dustbin.png")
+dustbin_icon = cv2.resize(dustbin_icon, (40, 40))
+
+print(red_icon.shape)
+
+while True:
+    success, frame = cap.read()
+
+    if not success:
+        break
+
+    frame = cv2.flip(frame, 1)
+
+    h, w = frame.shape[:2]
+
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    results = hands.process(rgb_frame)
+
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+
+            mp_draw.draw_landmarks(
+                frame,
+                hand_landmarks,
+                mp_hands.HAND_CONNECTIONS
+            )
+
+            index_tip = hand_landmarks.landmark[8]
+            index_up = (
+                hand_landmarks.landmark[8].y <
+                hand_landmarks.landmark[6].y <
+                hand_landmarks.landmark[5].y
+            )
+
+            middle_up = (
+                hand_landmarks.landmark[12].y <
+                hand_landmarks.landmark[10].y <
+                hand_landmarks.landmark[9].y
+            )
+
+            x = int(index_tip.x * w)
+            y = int(index_tip.y * h)
+
+            if y < 60:
+                if 10 < x < 50:
+                    draw_color = (0, 0, 255)
+                    brush_size = 5
+
+                elif 60 < x < 100:
+                    draw_color = (255, 0, 255)
+                    brush_size = 5
+
+                elif 110 < x < 150:
+                    draw_color = (255, 0, 0)
+                    brush_size = 5
+
+                elif 160 < x < 200:
+                    draw_color = (0, 255, 0)
+                    brush_size = 5
+
+                elif 210 < x < 250:
+                    draw_color = (0, 0, 0)
+                    brush_size = 30
+
+                elif 260 < x < 300:
+                    canvas = np.zeros((480, 640, 3), dtype=np.uint8)
+
+            if prev_x != 0 and prev_y != 0:
+                x = (x + prev_x) // 2
+                y = (y + prev_y) // 2
+
+            if index_up and not middle_up:
+                if prev_x == 0 and prev_y == 0:
+                    prev_x = x
+                    prev_y = y
+
+                cv2.line(canvas, (prev_x, prev_y), (x, y), draw_color, brush_size)
+
+                prev_x = x
+                prev_y = y
+
+            else:
+                prev_x = 0
+                prev_y = 0
+
+            cv2.circle(frame, (x, y), 12, (0, 0, 255), -1)
+
+            cv2.putText(
+                frame,
+                f"Index Tip: ({x}, {y})",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 0, 0),
+                2
+            )
+
+    roi = frame[10:50, 10:50]
+    print(roi.shape)
+
+    frame = cv2.add(frame, canvas)
+
+    frame[10:50, 10:50] = red_icon
+    frame[10:50, 60:100] = pink_icon
+    frame[10:50, 110:150] = blue_icon
+    frame[10:50, 160:200] = green_icon
+    frame[10:50, 210:250] = eraser_icon
+    frame[10:50, 260:300] = dustbin_icon
+
+    cv2.imshow("Index Finger Detection", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
