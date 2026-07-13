@@ -1,4 +1,4 @@
-# 👆 Hand Index Fingertip Detection using OpenCV & MediaPipe
+# 1>Hand Index Fingertip Detection using OpenCV & MediaPipe
 
 ## 📖 Overview
 
@@ -115,7 +115,7 @@ When the application is running, it displays:
 - Volume and brightness control using gestures
 
 ---
-# 🎨 Virtual Air Canvas using OpenCV & MediaPipe
+# 2> Virtual Air Canvas using OpenCV & MediaPipe
 
 ## 📖 Overview
 
