@@ -245,7 +245,7 @@ python main.py
 
 ---
 
-## 🔮 Future Improvements
+## 🔮 Future Improvements that I am currently working on
 
 - Adjustable brush sizes
 - Undo and Redo functionality
